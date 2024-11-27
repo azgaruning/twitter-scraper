@@ -1,6 +1,5 @@
 import { Scraper, SearchMode } from 'agent-twitter-client'; // Import the Scraper class
 import dotenv from 'dotenv';
-import express from 'express';
 
 dotenv.config();
 
@@ -52,38 +51,35 @@ async function fetchTweets(query, limit) {
     return allTweets;
 }
 
-// Initialize Express app
-const app = express();
-const port = process.env.PORT || 3000;
+// Export the serverless function
+export default async function handler(req, res) {
+    if (req.method === 'POST') {
+        // Access incoming headers
+        const userAgent = req.headers['user-agent'];
+        const apiKey = req.headers['x-api-key'];
 
-// Define the /tweets endpoint
-app.post('/tweets', async (req, res) => {
-    // Access incoming headers
-    const userAgent = req.headers['user-agent'];
-    const apiKey = req.headers['x-api-key'];
+        console.log('User-Agent:', userAgent);
+        console.log('API Key:', apiKey);
 
-    console.log('User-Agent:', userAgent);
-    console.log('API Key:', apiKey);
+        // Validate API key (assuming you have an expected key stored in .env)
+        if (apiKey !== process.env.EXTERNAL_API_KEY) {
+            return res.status(403).json({ error: 'Forbidden: Invalid API Key' });
+        }
 
-    // Validate API key (assuming you have an expected key stored in .env)
-    if (apiKey !== process.env.EXTERNAL_API_KEY) {
-        return res.status(403).json({ error: 'Forbidden: Invalid API Key' });
+        // Read body data from the request
+        const { q, limit } = req.body;
+        const query = q || 'DOGECOIN';
+        const limitCount = parseInt(limit) || 10;
+
+        try {
+            await loginToTwitter();
+            const allTweets = await fetchTweets(query, limitCount);
+            res.status(200).json(allTweets);  // Respond with the fetched tweets
+        } catch (error) {
+            res.status(500).json({ error: 'Failed to fetch tweets' });
+        }
+    } else {
+        // Method Not Allowed if not a POST request
+        res.status(405).json({ error: 'Method Not Allowed' });
     }
-
-    const { q, limit } = req.body;
-    const query = q || 'DOGECOIN';
-    const limitCount = parseInt(limit) || 10;
-
-    try {
-        await loginToTwitter();
-        const allTweets = await fetchTweets(query, limitCount);
-        res.status(200).json(allTweets);  // Respond with the fetched tweets
-    } catch (error) {
-        res.status(500).json({ error: 'Failed to fetch tweets' });
-    }
-});
-
-// Start the server
-app.listen(port, () => {
-    console.log(`Server is running on http://localhost:${port}`);
-});
+}
