@@ -1,16 +1,18 @@
 {
     "version": 2,
     "builds": [
-      {
-        "src": "index.js",
-        "use": "@vercel/node"
-      }
+        {
+            "src": "api/tweets.js",
+            "use": "@vercel/node"
+        }
     ],
     "routes": [
-      {
-        "src": "/(.*)",
-        "dest": "/index.js"
-      }
+        {
+            "src": "/api/tweets",
+            "headers": {
+                "Cache-Control": "s-maxage=10, stale-while-revalidate"
+            },
+            "dest": "/api/tweets.js"
+        }
     ]
-  }
-  
+}

@@ -57,14 +57,27 @@ const app = express();
 const port = process.env.PORT || 3000;
 
 // Define the /tweets endpoint
-app.get('/tweets', async (req, res) => {
-    const query = req.query.q || 'DOGECOIN';  // Default query if not provided
-    const limit = parseInt(req.query.limit) || 10;  // Default limit if not provided
+app.post('/tweets', async (req, res) => {
+    // Access incoming headers
+    const userAgent = req.headers['user-agent'];
+    const apiKey = req.headers['x-api-key'];
+
+    console.log('User-Agent:', userAgent);
+    console.log('API Key:', apiKey);
+
+    // Validate API key (assuming you have an expected key stored in .env)
+    if (apiKey !== process.env.EXTERNAL_API_KEY) {
+        return res.status(403).json({ error: 'Forbidden: Invalid API Key' });
+    }
+
+    const { q, limit } = req.body;
+    const query = q || 'DOGECOIN';
+    const limitCount = parseInt(limit) || 10;
 
     try {
-        await loginToTwitter();  // Log in to Twitter before fetching tweets
-        const allTweets = await fetchTweets(query, limit);
-        res.json(allTweets);  // Respond with the fetched tweets
+        await loginToTwitter();
+        const allTweets = await fetchTweets(query, limitCount);
+        res.status(200).json(allTweets);  // Respond with the fetched tweets
     } catch (error) {
         res.status(500).json({ error: 'Failed to fetch tweets' });
     }
