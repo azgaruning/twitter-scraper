@@ -20,6 +20,7 @@ async function loginToTwitter() {
     );
 }
 
+// Function to fetch tweets
 async function fetchTweets(query, limit) {
     let allTweets = [];
     let nextCursor = null;
@@ -57,13 +58,13 @@ const port = process.env.PORT || 3000;
 
 // Define the /tweets endpoint
 app.get('/tweets', async (req, res) => {
-    const query = req.query.q || 'DOGECOIN';
-    const limit = parseInt(req.query.limit) || 10;
+    const query = req.query.q || 'DOGECOIN';  // Default query if not provided
+    const limit = parseInt(req.query.limit) || 10;  // Default limit if not provided
 
     try {
-        await loginToTwitter();
+        await loginToTwitter();  // Log in to Twitter before fetching tweets
         const allTweets = await fetchTweets(query, limit);
-        res.json(allTweets);
+        res.json(allTweets);  // Respond with the fetched tweets
     } catch (error) {
         res.status(500).json({ error: 'Failed to fetch tweets' });
     }
@@ -73,9 +74,3 @@ app.get('/tweets', async (req, res) => {
 app.listen(port, () => {
     console.log(`Server is running on http://localhost:${port}`);
 });
-
-// Example usage
-const query = 'DOGECOIN';  // Set your query here
-const limit = 10;  // Set your desired limit here
-const allTweets = await fetchTweets(query, limit);
-console.log(allTweets);
